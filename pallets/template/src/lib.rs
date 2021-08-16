@@ -23,9 +23,9 @@ pub mod pallet {
     #[pallet::metadata(T::AccountId = "AccountId")]
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
-        /// Event emitted when a proof has been claimed. [who, claim]
+        /// Event emitted when a record has been stored.[who,coordinates]
         LandRecordStored(T::AccountId, Vec<u8>),
-    /// Event emitted when a claim is revoked by the owner. [who, claim]
+       /// Event emitted when coordinates are verified. [onwer]
         OwnerVerified(Vec<u8>),
     }
     
@@ -65,13 +65,13 @@ pub mod pallet {
 			// https://substrate.dev/docs/en/knowledgebase/runtime/origin
 			let sender = ensure_signed(origin)?;
 		
-			// Verify that the specified proof has not already been claimed.         
+			// Verify that the specified coordinates doesn't exist in block.         
 			ensure!(!Proofs::<T>::contains_key(&coordinates), Error::<T>::LandRecordExists);
 
-			// Store the proof with the sender and block number.
+			// Store the proof with the coordinates, (owner and sender).
 			Proofs::<T>::insert(&coordinates, (&owner,&sender));
 
-			// Emit an event that the claim was created.
+			// Emit an event that the land record is stored.
 			Self::deposit_event(Event::LandRecordStored(sender,coordinates));
 
 			Ok(().into())
@@ -87,13 +87,13 @@ pub mod pallet {
 			// https://substrate.dev/docs/en/knowledgebase/runtime/origin
 			ensure_signed(origin)?;
 
-			// Verify that the specified proof has been claimed.
+			// Verify that the land record exist in block .
 			ensure!(Proofs::<T>::contains_key(&coordinates), Error::<T>::NoSuchLandRecord);
 
-			// Get owner of the claim.
+			// Get owner of the land.
 			let (owner,_) = Proofs::<T>::get(&coordinates);
 
-			// Emit an event that the claim was erased.
+			// Emit an event that the land record is verified.
 			Self::deposit_event(Event::OwnerVerified(owner));
 
 			Ok(().into())
